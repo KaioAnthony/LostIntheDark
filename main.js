@@ -905,7 +905,7 @@ function usarHabilidadeVisao() {
         if (estadoJogo === "Jogando") { 
             ambientLight.intensity = 0.0; 
         }
-    }, 500 + duracaoExtra);
+    }, 690 + duracaoExtra);
 }
 
 function usarHabilidadeQuebrar() {
