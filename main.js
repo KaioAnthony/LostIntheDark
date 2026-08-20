@@ -892,7 +892,7 @@ function usarHabilidadeLuz() {
 }
 
 function usarHabilidadeVisao() {
-    let duracaoExtra = nivelDash * 100;
+    let duracaoExtra = nivelDash * 150;
     if (!podeUsarHabilidade() || Date.now() < cdDashTimer || visaoAtiva) return;
     cdDashTimer = Date.now() + CD_DASH_MAX;
     
@@ -905,7 +905,7 @@ function usarHabilidadeVisao() {
         if (estadoJogo === "Jogando") { 
             ambientLight.intensity = 0.0; 
         }
-    }, 350 + duracaoExtra);
+    }, 500 + duracaoExtra);
 }
 
 function usarHabilidadeQuebrar() {
