@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lost in The Dark</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='white'/></svg>">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <audio id="bgm-music" src="music.mp3" loop preload="auto"></audio>
+
+  <div id="hud-container">
+    <div id="hud-timer" class="minecraft-box fade-hidden">TEMPO: --</div>
+    <button id="btn-pause" class="minecraft-btn btn-pause-center fade-hidden">PAUSA [P]</button>
+    <div id="hud-compass" class="minecraft-box fade-hidden" style="top: 85px; font-size: 14px;">
+      SAÍDA: <span id="compass-arrow" style="display:inline-block; transition: transform 0.1s;">➡️</span>
+    </div>
+    <div id="hud-score" class="minecraft-box fade-hidden" style="display: none; right: 25px; left: auto; transform: none;">PONTOS RESTANTES: 0</div>
+  </div>
+
+  <div id="hud-skills" class="fade-hidden">
+    <div class="skill-box" id="skill-light-btn" style="cursor: pointer;">
+      <span style="font-size: 9px; text-align: center;">LUZ<br>[E]</span>
+      <div class="skill-cooldown-overlay" id="cd-light"></div>
+    </div>
+    <div class="skill-box" id="skill-dash-btn" style="cursor: pointer;">
+      <span style="font-size: 9px; text-align: center;">VISÃO<br>[R]</span>
+      <div class="skill-cooldown-overlay" id="cd-dash"></div>
+    </div>
+    <div class="skill-box" id="skill-break-btn" style="cursor: pointer;">
+      <span style="font-size: 9px; text-align: center;">QUEBRAR<br>[Q]</span>
+      <div class="skill-cooldown-overlay" id="cd-break"></div>
+    </div>
+    <div class="skill-box" id="skill-freeze-btn" style="cursor: pointer;">
+      <span style="font-size: 9px; text-align: center;">TEMPO<br>[C]</span>
+      <div class="skill-cooldown-overlay" id="cd-freeze"></div>
+    </div>
+  </div>
+
+  <div id="dpad-container" class="fade-hidden">
+    <button class="dpad-btn" id="btn-up">W</button>
+    <button class="dpad-btn" id="btn-left">A</button>
+    <button class="dpad-btn" id="btn-right">D</button>
+    <button class="dpad-btn" id="btn-down">S</button>
+  </div>
+
+  <button id="btn-open-menu" class="minecraft-btn fade-visible" style="position: absolute; top: 15px; left: 15px; font-size: 14px; padding: 10px; z-index: 999;">MENU</button>
+
+  <div id="screen-overlay" class="overlay fade-visible">
+    <div id="modal-inicio" class="minecraft-panel screen-active">
+      <h1 id="modal-title" class="mc-title" style="color: #55FF55;">LOST IN THE DARK</h1>
+      <p id="modal-msg" class="mc-text">Tente achar a luz para sair!</p>
+      <div id="run-stats" class="mc-text" style="display: none; color: #55ff55;"></div>
+      <button id="btn-play" class="minecraft-btn btn-large">JOGAR</button>
+      <span class="tip-text" style="margin-top: 15px;">Pressione [ESPAÇO] para iniciar</span>
+    </div>
+
+    <div id="modal-pause" class="minecraft-panel screen-hidden" style="max-width: 520px;">
+      <h1 class="mc-title" style="color: #ffffff; margin-bottom: 15px;">Opções</h1>
+      
+      <div class="control-buttons mc-grid-2">
+        <button id="toggle-gamemodes" class="minecraft-btn btn-tab">MODOS</button>
+        <button id="toggle-settings" class="minecraft-btn btn-tab">AJUSTES</button>
+        <button id="toggle-shop" class="minecraft-btn btn-tab" style="background-color: #9b59b6;">CORES</button>
+        <button id="toggle-skills" class="minecraft-btn btn-tab" style="background-color: #e67e22;">SKILLS</button>
+      </div>
+      
+      <div id="panel-gamemodes" class="mini-panel hidden">
+        <h3 style="color: #55FF55;">MODOS DE JOGO</h3>
+        <button class="minecraft-btn btn-large btn-mode-select" data-mode="Normal">Normal</button>
+        <button class="minecraft-btn btn-large btn-mode-select" data-mode="Speedrun">Speedrun</button>
+        
+        <div id="speedrun-options" class="sub-options">
+          <div class="mc-fases-container">
+            <span class="mc-fases-label">FASES:</span>
+            <button id="btn-fases-minus" class="minecraft-btn mc-btn-step">-</button>
+            <div id="fases-val" class="mc-fases-display">5</div>
+            <button id="btn-fases-plus" class="minecraft-btn mc-btn-step">+</button>
+          </div>
+          <button id="btn-chk-speedrun-skills" class="minecraft-btn btn-large" style="margin-top: 5px;">Poderes: ON</button>
+        </div>
+
+        <button class="minecraft-btn btn-large btn-mode-select" data-mode="Hard1">Difícil</button>
+        <button class="minecraft-btn btn-large btn-mode-select" data-mode="Infinite">Infinito</button>
+      </div>
+
+      <div id="panel-settings" class="mini-panel hidden">
+        <h3 style="color: #55FF55;">SOM E CONFIGURAÇÕES</h3>
+        <div class="mc-grid-2" style="margin-top: 10px;">
+          <div class="mc-slider-wrapper">
+            <input type="range" id="slider-sfx" class="mc-slider" min="0" max="100" value="100">
+            <span id="lbl-sfx" class="mc-slider-label">SFX: 100%</span>
+          </div>
+          <div class="mc-slider-wrapper">
+            <input type="range" id="slider-music" class="mc-slider" min="0" max="100" value="100">
+            <span id="lbl-music" class="mc-slider-label">Música: 100%</span>
+          </div>
+        </div>
+        <div style="margin-top: 15px;">
+          <button id="btn-chk-autostart" class="minecraft-btn btn-large">Auto-Start: OFF</button>
+          <button id="btn-reset-progress" class="minecraft-btn btn-large btn-danger" style="margin-top: 10px;">DELETAR PROGRESSO</button>
+        </div>
+      </div>
+
+      <div id="panel-shop" class="mini-panel hidden">
+        <h3 style="color: #55FF55;">LOJA</h3>
+        <p class="shop-points-display" style="font-size: 14px; color: #ffaa00; margin-bottom: 10px;">Pontos: 0</p>
+        
+        <button class="minecraft-btn btn-shop" id="btn-shop-custom" data-cost="0">Cor Custom (Grátis)</button>
+        <input type="color" id="picker-custom" style="opacity: 0; position: absolute; pointer-events: none; width: 0; height: 0;" value="#00f2fe">
+        <button class="minecraft-btn btn-shop" id="btn-shop-rainbow" data-cost="5000">Arco-Íris (5000 pts)</button>
+        <button class="minecraft-btn btn-shop" id="btn-shop-degrade" data-cost="5000">Degradê (5000 pts)</button>
+        
+        <input type="color" id="picker-custom" style="display: none;" value="#00f2fe">
+
+        <div id="combo-customizer" class="combo-panel" style="display: none;">
+          <h4 style="color: #55FF55; font-size: 10px; font-family: 'Press Start 2P'; margin: 0 0 8px 0;">SUPER COMBO ATIVADO!</h4>
+          <button id="btn-activate-combo" class="minecraft-btn btn-shop" style="background-color: #e74c3c;">Equipar Combo Rainbow + Degradê</button>
+          
+          <div class="combo-row">
+            <span>Cor Degradê A:</span>
+            <input type="color" id="picker-degrade-a" class="combo-color-input" value="#ff0055">
+          </div>
+          <div class="combo-row">
+            <span>Cor Degradê B:</span>
+            <input type="color" id="picker-degrade-b" class="combo-color-input" value="#00ffff">
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-skills" class="mini-panel hidden">
+        <h3 style="color: #e67e22;">HABILIDADES</h3>
+        <p class="shop-points-display" style="font-size: 14px; color: #ffaa00; margin-bottom: 10px;">Pontos: 0</p>
+        <button class="minecraft-btn btn-shop" id="btn-up-light" style="background-color: #d35400;">Luz Nvl <span id="lvl-light">0</span> (Custo: <span id="cost-light">100</span>)</button>
+        <button class="minecraft-btn btn-shop" id="btn-up-dash" style="background-color: #2980b9;">Visão Nvl <span id="lvl-dash">0</span> (Custo: <span id="cost-dash">150</span>)</button>
+        <button class="minecraft-btn btn-shop" id="btn-up-break" style="background-color: #8e44ad;">Quebrar Nvl <span id="lvl-break">0</span> (Custo: <span id="cost-break">200</span>)</button>
+        <button class="minecraft-btn btn-shop" id="btn-up-freeze" style="background-color: #f39c12;">Tempo Nvl <span id="lvl-freeze">0</span> (Custo: <span id="cost-freeze">300</span>)</button>
+      </div>
+
+      <hr style="border-color: #555; margin: 20px 0;">
+      <div class="mc-grid-2">
+        <button id="btn-resume" class="minecraft-btn btn-large" style="margin-bottom: 0;">Concluído</button>
+        <button id="btn-quit" class="minecraft-btn btn-large" style="background-color: #aa0000; border-color: #ffffff #333333 #333333 #ffffff; margin-bottom: 0;">Sair do Jogo</button>
+      </div>
+    </div>
+
+    <div id="modal-alerta" class="minecraft-panel screen-hidden">
+      <h2 style="color: #ff5555; font-family: 'Press Start 2P', monospace; font-size: 16px;">ATENÇÃO!</h2>
+      <p style="color: white; margin: 20px 0;">Trocar de modo irá reiniciar sua partida atual. Deseja continuar?</p>
+      <button id="btn-confirm-mode" class="minecraft-btn btn-large" style="margin-bottom: 10px;">SIM, REINICIAR</button>
+      <button id="btn-cancel-mode" class="minecraft-btn btn-large" style="background-color: #555;">CANCELAR</button>
+    </div>
+    <div id="modal-alerta-reset" class="minecraft-panel screen-hidden">
+      <h2 style="color: #ff3333; font-family: 'Press Start 2P', monospace; font-size: 16px;">PERIGO!</h2>
+      <p style="color: white; margin: 20px 0; font-size: 13px; line-height: 1.6;">
+        Deseja deletar todo o seu progresso?<br>
+        <span style="color: #ffaaaa; font-size: 11px;">(Seus pontos, habilidades e skins serão apagados!)</span>
+      </p>
+      <button id="btn-confirm-reset" class="minecraft-btn btn-large btn-danger" style="margin-bottom: 10px;">SIM, APAGAR TUDO</button>
+      <button id="btn-cancel-reset" class="minecraft-btn btn-large" style="background-color: #555;">CANCELAR</button>
+    </div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
